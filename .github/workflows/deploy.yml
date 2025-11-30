@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 env:
-  ACR: mpchenettecr
-  APP: mpchenette-webapp
-  RG: rg-mpchenette-webapp
+  ACR: crmpchenettescus
+  APP: ca-mpchenette-scus
+  RG: rg-mpchenette-scus
 
 jobs:
   deploy:

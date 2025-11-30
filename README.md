@@ -61,7 +61,7 @@ terraform apply -var="cloudflare_api_token=YOUR_TOKEN"
 
 # Build & push image
 ACR=$(terraform output -raw container_registry_login_server)
-az acr login --name mpchenettecr
+az acr login --name crmpchenettescus
 docker build -t $ACR/hello-world:latest .
 docker push $ACR/hello-world:latest
 
@@ -74,23 +74,28 @@ az containerapp update \
 
 ## Infrastructure
 
-- **Azure Container Apps** - Serverless containers, 0.25 vCPU, 0.5GB RAM, scales 0-3
-- **Azure Container Registry** - Stores Docker images
-- **Cloudflare DNS** - Proxied CNAME to Azure (apex + www)
+Resources follow [Azure naming conventions](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming):
 
+- **ca-mpchenette-scus** - Container App (0.25 vCPU, 0.5GB RAM, scales 0-3)
+- **crmpchenettescus** - Container Registry
+- **cae-mpchenette-scus** - Container Apps Environment
+- **log-mpchenette-scus** - Log Analytics Workspace
+- **rg-mpchenette-scus** - Resource Group
+
+**Region**: South Central US
 **Cost**: ~$7-12/month (scales to zero when idle)
 
 ## Management
 
 ```bash
 # View logs
-az containerapp logs show --name mpchenette-webapp --resource-group rg-mpchenette-webapp --follow
+az containerapp logs show --name ca-mpchenette-scus --resource-group rg-mpchenette-scus --follow
 
 # Check status
-az containerapp show --name mpchenette-webapp --resource-group rg-mpchenette-webapp --query "properties.runningStatus"
+az containerapp show --name ca-mpchenette-scus --resource-group rg-mpchenette-scus --query "properties.runningStatus"
 
 # Scale
-az containerapp update --name mpchenette-webapp --resource-group rg-mpchenette-webapp --min-replicas 1 --max-replicas 5
+az containerapp update --name ca-mpchenette-scus --resource-group rg-mpchenette-scus --min-replicas 1 --max-replicas 5
 ```
 
 ## Files

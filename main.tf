@@ -30,13 +30,17 @@ variable "domain" {
 variable "location" {
   description = "Azure region"
   type        = string
-  default     = "eastus"
+  default     = "southcentralus"
 }
 
-variable "app_name" {
-  description = "App name"
+variable "workload" {
+  description = "Workload name"
   type        = string
-  default     = "mpchenette-webapp"
+  default     = "mpchenette"
+}
+
+locals {
+  location_short = "scus"  # southcentralus abbreviation
 }
 
 # Outputs
@@ -66,13 +70,13 @@ output "container_registry_login_server" {
 
 # Resource Group
 resource "azurerm_resource_group" "main" {
-  name     = "rg-${var.app_name}"
+  name     = "rg-${var.workload}-${local.location_short}"
   location = var.location
 }
 
 # Container Registry
 resource "azurerm_container_registry" "acr" {
-  name                = "mpchenettecr"
+  name                = "cr${var.workload}${local.location_short}"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   sku                 = "Basic"
@@ -81,7 +85,7 @@ resource "azurerm_container_registry" "acr" {
 
 # Log Analytics Workspace
 resource "azurerm_log_analytics_workspace" "logs" {
-  name                = "${var.app_name}-logs"
+  name                = "log-${var.workload}-${local.location_short}"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   sku                 = "PerGB2018"
@@ -90,7 +94,7 @@ resource "azurerm_log_analytics_workspace" "logs" {
 
 # Container Apps Environment
 resource "azurerm_container_app_environment" "env" {
-  name                       = "${var.app_name}-env"
+  name                       = "cae-${var.workload}-${local.location_short}"
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location
   log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
@@ -98,7 +102,7 @@ resource "azurerm_container_app_environment" "env" {
 
 # Container App
 resource "azurerm_container_app" "app" {
-  name                         = var.app_name
+  name                         = "ca-${var.workload}-${local.location_short}"
   resource_group_name          = azurerm_resource_group.main.name
   container_app_environment_id = azurerm_container_app_environment.env.id
   revision_mode                = "Single"
