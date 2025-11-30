@@ -1,11 +1,11 @@
 # mpchenette.com
 
-Minimal HTTP server in Rust (std only) returning plain text "Hello World". Deployed to Azure Container Apps with Cloudflare DNS.
+Minimal HTTP server in Go (std only) returning plain text "Hello World". Deployed to Azure Container Apps with Cloudflare DNS.
 
 ## Local Development
 
 ```bash
-cargo run                # Start server on :8000
+go run main.go           # Start server on :8000
 curl localhost:8000      # Returns: Hello World
 ```
 
@@ -16,7 +16,7 @@ docker build -t hello-world .
 docker run -p 8000:8000 hello-world
 ```
 
-**Image**: ~6MB (Rust → scratch, statically linked musl binary)
+**Image**: ~2MB (Go → scratch, statically linked binary)
 
 ## Deploy to Azure
 
@@ -100,8 +100,8 @@ az containerapp update --name ca-mpchenette-scus --resource-group rg-mpchenette-
 
 ## Files
 
-- [src/main.rs](src/main.rs) - HTTP server
-- [Cargo.toml](Cargo.toml) - Rust manifest (zero deps)
+- [main.go](main.go) - HTTP server
+- [go.mod](go.mod) - Go module (zero deps)
 - [Dockerfile](Dockerfile) - Multi-stage build
 - [main.tf](main.tf) - Infrastructure as code
 - [.github/workflows/deploy.yml](.github/workflows/deploy.yml) - CI/CD pipeline

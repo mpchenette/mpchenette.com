@@ -1,6 +1,6 @@
-# Rust
-target/
-Cargo.lock
+# Go
+hello-world
+go.sum
 
 # Terraform
 .terraform/
