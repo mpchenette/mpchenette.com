@@ -1,15 +1,8 @@
 terraform {
   required_version = ">= 1.0"
-
   required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
-    }
+    azurerm    = { source = "hashicorp/azurerm", version = "~> 3.0" }
+    cloudflare = { source = "cloudflare/cloudflare", version = "~> 4.0" }
   }
 }
 
@@ -21,43 +14,78 @@ provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
 
+# Variables
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token"
+  type        = string
+  sensitive   = true
+}
+
+variable "domain" {
+  description = "Domain name"
+  type        = string
+  default     = "mpchenette.com"
+}
+
+variable "location" {
+  description = "Azure region"
+  type        = string
+  default     = "eastus"
+}
+
+variable "app_name" {
+  description = "App name"
+  type        = string
+  default     = "mpchenette-webapp"
+}
+
+# Outputs
+output "url" {
+  value = "https://${var.domain}"
+}
+
+output "container_app_name" {
+  value = azurerm_container_app.app.name
+}
+
+output "container_app_fqdn" {
+  value = azurerm_container_app.app.latest_revision_fqdn
+}
+
+output "resource_group_name" {
+  value = azurerm_resource_group.main.name
+}
+
+output "container_registry_name" {
+  value = azurerm_container_registry.acr.name
+}
+
+output "container_registry_login_server" {
+  value = azurerm_container_registry.acr.login_server
+}
+
 # Resource Group
 resource "azurerm_resource_group" "main" {
-  name     = var.resource_group_name
+  name     = "rg-${var.app_name}"
   location = var.location
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
 }
 
 # Container Registry
 resource "azurerm_container_registry" "acr" {
-  name                = var.acr_name
+  name                = "mpchenettecr"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   sku                 = "Basic"
   admin_enabled       = true
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
 }
 
-# Log Analytics Workspace (required for Container Apps)
+# Log Analytics Workspace
 resource "azurerm_log_analytics_workspace" "logs" {
   name                = "${var.app_name}-logs"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   sku                 = "PerGB2018"
   retention_in_days   = 30
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
 }
 
 # Container Apps Environment
@@ -66,11 +94,6 @@ resource "azurerm_container_app_environment" "env" {
   resource_group_name        = azurerm_resource_group.main.name
   location                   = azurerm_resource_group.main.location
   log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
 }
 
 # Container App
@@ -117,48 +140,33 @@ resource "azurerm_container_app" "app" {
     }
   }
 
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
 }
 
-# Custom Domain for Container App
+# Custom Domain
 resource "azurerm_container_app_custom_domain" "custom_domain" {
-  name             = var.domain_name
-  container_app_id = azurerm_container_app.app.id
-
-  # Certificate binding will be handled separately or via Cloudflare
+  name                     = var.domain
+  container_app_id         = azurerm_container_app.app.id
   certificate_binding_type = "Disabled"
-
-  depends_on = [cloudflare_record.cname]
+  depends_on               = [cloudflare_record.root]
 }
 
-# Get Cloudflare Zone
+# Cloudflare DNS
 data "cloudflare_zone" "domain" {
-  name = var.cloudflare_zone_name
+  name = var.domain
 }
 
-# Cloudflare DNS Record (CNAME to Azure Container App)
-resource "cloudflare_record" "cname" {
+resource "cloudflare_record" "root" {
   zone_id = data.cloudflare_zone.domain.id
   name    = "@"
   content = azurerm_container_app.app.latest_revision_fqdn
   type    = "CNAME"
-  ttl     = 1
   proxied = true
-
-  comment = "Managed by Terraform - Points to Azure Container App"
 }
 
-# Cloudflare DNS Record (www subdomain)
 resource "cloudflare_record" "www" {
   zone_id = data.cloudflare_zone.domain.id
   name    = "www"
-  content = var.domain_name
+  content = var.domain
   type    = "CNAME"
-  ttl     = 1
   proxied = true
-
-  comment = "Managed by Terraform - Redirects www to apex domain"
 }
