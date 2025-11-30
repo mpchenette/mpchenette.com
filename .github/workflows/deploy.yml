@@ -1,47 +1,39 @@
-name: Deploy
+name: deploy
 
 on:
   push:
-    branches: [main]
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
-env:
-  ACR: crmpchenettescus
-  APP: ca-mpchenette-scus
-  RG: rg-mpchenette-scus
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  deploy:
+  infrastructure:
+    environment: prod
     runs-on: ubuntu-latest
-    environment: production
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/login@v1
+      - uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - uses: actions/checkout@v6
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      # TERRAFORM
+      - uses: hashicorp/setup-terraform@v3
+
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
-          terraform_wrapper: false
-
-      - name: Terraform Apply
-        run: |
-          terraform init
-          terraform apply -auto-approve
-        env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Build & Deploy
-        run: |
-          ACR_SERVER=$(terraform output -raw container_registry_login_server)
-          az acr login --name $ACR
-          docker build -t $ACR_SERVER/hello-world:${{ github.sha }} .
-          docker tag $ACR_SERVER/hello-world:${{ github.sha }} $ACR_SERVER/hello-world:latest
-          docker push $ACR_SERVER/hello-world:${{ github.sha }}
-          docker push $ACR_SERVER/hello-world:latest
-          az containerapp update --name $APP --resource-group $RG --image $ACR_SERVER/hello-world:${{ github.sha }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: "{{defaultContext}}"
+          tags: mpchenette/copilot-feature-matrix:latest
+          push: true
