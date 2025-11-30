@@ -1,6 +1,12 @@
-node_modules
-npm-debug.log
+target/
 .git
 .gitignore
 README.md
 .env
+.github/
+*.md
+main.tf
+variables.tf
+outputs.tf
+backend.tf
+terraform.tfvars*

@@ -1,20 +1,10 @@
-# Use official Node.js runtime as base image
-FROM node:18-alpine
-
-# Set working directory in container
+FROM rust:1.75 as builder
 WORKDIR /app
+COPY . .
+RUN rustup target add x86_64-unknown-linux-musl
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install --production
-
-# Copy application files
-COPY server.js ./
-
-# Expose port 3000
-EXPOSE 3000
-
-# Start the application
-CMD ["npm", "start"]
+FROM scratch
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/hello-world .
+EXPOSE 8000
+CMD ["./hello-world"]
