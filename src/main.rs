@@ -28,7 +28,9 @@ fn handle_connection(mut stream: TcpStream) {
         return;
     }
 
-    let response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello World";
+    let environment = std::env::var("RUNTIME_ENV").unwrap_or_else(|_| "Plain Rust".to_string());
+    let body = format!("Hello World - {}", environment);
+    let response = format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n{}", body);
 
     if let Err(e) = stream.write_all(response.as_bytes()) {
         eprintln!("Failed to write to stream: {}", e);

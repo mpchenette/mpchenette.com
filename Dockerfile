@@ -1,10 +1,10 @@
-FROM rust AS builder
+FROM rust:alpine AS builder
 WORKDIR /app
 COPY . .
-RUN rustup target add x86_64-unknown-linux-musl
-RUN cargo build --release --target x86_64-unknown-linux-musl
+RUN cargo build --release
 
 FROM scratch
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/hello-world .
+COPY --from=builder /app/target/release/hello-world .
+ENV RUNTIME_ENV="Docker Container"
 EXPOSE 8000
 CMD ["./hello-world"]

@@ -129,6 +129,11 @@ resource "azurerm_container_app" "app" {
         name  = "PORT"
         value = "8000"
       }
+
+      env {
+        name  = "RUNTIME_ENV"
+        value = "Azure Container App"
+      }
     }
 
     min_replicas = 0
