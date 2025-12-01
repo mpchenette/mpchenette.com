@@ -4,15 +4,6 @@ resource "azurerm_resource_group" "main" {
   location = var.location
 }
 
-# Container Registry
-resource "azurerm_container_registry" "acr" {
-  name                = "cr${var.workload}${local.location_short}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  sku                 = "Basic"
-  admin_enabled       = true
-}
-
 # Log Analytics Workspace
 resource "azurerm_log_analytics_workspace" "logs" {
   name                = "log-${var.workload}-${local.location_short}"
@@ -37,21 +28,10 @@ resource "azurerm_container_app" "app" {
   container_app_environment_id = azurerm_container_app_environment.env.id
   revision_mode                = "Single"
 
-  registry {
-    server               = azurerm_container_registry.acr.login_server
-    username             = azurerm_container_registry.acr.admin_username
-    password_secret_name = "registry-password"
-  }
-
-  secret {
-    name  = "registry-password"
-    value = azurerm_container_registry.acr.admin_password
-  }
-
   template {
     container {
       name   = "hello-world-app"
-      image  = "${azurerm_container_registry.acr.login_server}/hello-world-app:latest"
+      image  = "mpchenette/mpchenette.com:latest"
       cpu    = 0.25
       memory = "0.5Gi"
 
