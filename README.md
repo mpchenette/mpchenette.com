@@ -1,1 +1,107 @@
 # mpchenette.com
+
+Minimal HTTP server in Go (std only) returning plain text "Hello World". Deployed to Azure Container Apps with Cloudflare DNS.
+
+## Local Development
+
+```bash
+go run main.go           # Start server on :8000
+curl localhost:8000      # Returns: Hello World
+```
+
+## Docker
+
+```bash
+docker build -t hello-world .
+docker run -p 8000:8000 hello-world
+```
+
+**Image**: ~2MB (Go → scratch, statically linked binary)
+
+## Deploy to Azure
+
+### Prerequisites
+- Azure subscription
+- Cloudflare account with domain
+- GitHub repo with these secrets:
+  - `AZURE_CREDENTIALS` - Service principal JSON
+  - `AZURE_CLIENT_ID`
+  - `AZURE_CLIENT_SECRET`
+  - `AZURE_SUBSCRIPTION_ID`
+  - `AZURE_TENANT_ID`
+  - `CLOUDFLARE_API_TOKEN`
+
+### Setup
+
+1. **Create Azure service principal:**
+   ```bash
+   az ad sp create-for-rbac \
+     --name "github-actions-mpchenette" \
+     --role contributor \
+     --scopes /subscriptions/<SUBSCRIPTION_ID> \
+     --sdk-auth
+   ```
+
+2. **Get Cloudflare API token:**
+   - Go to [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens)
+   - Permission: Zone > DNS > Edit
+   - Zone: mpchenette.com
+
+3. **Deploy:**
+   ```bash
+   git push origin main  # GitHub Actions handles the rest
+   ```
+
+### Manual Deployment
+
+```bash
+# Terraform
+terraform init
+terraform apply -var="cloudflare_api_token=YOUR_TOKEN"
+
+# Build & push image
+ACR=$(terraform output -raw container_registry_login_server)
+az acr login --name crmpchenettescus
+docker build -t $ACR/hello-world:latest .
+docker push $ACR/hello-world:latest
+
+# Update container app
+az containerapp update \
+  --name $(terraform output -raw container_app_name) \
+  --resource-group $(terraform output -raw resource_group_name) \
+  --image $ACR/hello-world:latest
+```
+
+## Infrastructure
+
+Resources follow [Azure naming conventions](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming):
+
+- **ca-mpchenette-scus** - Container App (0.25 vCPU, 0.5GB RAM, scales 0-3)
+- **crmpchenettescus** - Container Registry
+- **cae-mpchenette-scus** - Container Apps Environment
+- **log-mpchenette-scus** - Log Analytics Workspace
+- **rg-mpchenette-scus** - Resource Group
+
+**Region**: South Central US
+**Cost**: ~$7-12/month (scales to zero when idle)
+
+## Management
+
+```bash
+# View logs
+az containerapp logs show --name ca-mpchenette-scus --resource-group rg-mpchenette-scus --follow
+
+# Check status
+az containerapp show --name ca-mpchenette-scus --resource-group rg-mpchenette-scus --query "properties.runningStatus"
+
+# Scale
+az containerapp update --name ca-mpchenette-scus --resource-group rg-mpchenette-scus --min-replicas 1 --max-replicas 5
+```
+
+## Files
+
+- [main.go](main.go) - HTTP server
+- [go.mod](go.mod) - Go module (zero deps)
+- [Dockerfile](Dockerfile) - Multi-stage build
+- [main.tf](main.tf) - Infrastructure as code
+- [.github/workflows/deploy.yml](.github/workflows/deploy.yml) - CI/CD pipeline

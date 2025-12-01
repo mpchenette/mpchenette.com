@@ -1,0 +1,10 @@
+hello-world
+go.sum
+.git
+.gitignore
+README.md
+.env
+.github/
+*.md
+main.tf
+terraform.tfvars*
