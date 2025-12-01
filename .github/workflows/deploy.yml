@@ -40,6 +40,22 @@ jobs:
           terraform state show azurerm_resource_group.main 2>/dev/null || \
             terraform import azurerm_resource_group.main /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-mpchenette-scus
 
+          # Import Log Analytics Workspace if not already in state
+          terraform state show azurerm_log_analytics_workspace.logs 2>/dev/null || \
+            terraform import azurerm_log_analytics_workspace.logs /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-mpchenette-scus/providers/Microsoft.OperationalInsights/workspaces/log-mpchenette-scus
+
+          # Import Container Apps Environment if not already in state
+          terraform state show azurerm_container_app_environment.env 2>/dev/null || \
+            terraform import azurerm_container_app_environment.env /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-mpchenette-scus/providers/Microsoft.App/managedEnvironments/cae-mpchenette-scus
+
+          # Import Container App if not already in state
+          terraform state show azurerm_container_app.app 2>/dev/null || \
+            terraform import azurerm_container_app.app /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-mpchenette-scus/providers/Microsoft.App/containerApps/ca-mpchenette-scus
+
+          # Import Custom Domain if not already in state
+          terraform state show azurerm_container_app_custom_domain.custom_domain 2>/dev/null || \
+            terraform import azurerm_container_app_custom_domain.custom_domain /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-mpchenette-scus/providers/Microsoft.App/containerApps/ca-mpchenette-scus/customDomainNames/mpchenette.com || true
+
       - name: Terraform Plan
         working-directory: ./terraform
         env:
