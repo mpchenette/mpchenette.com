@@ -5,6 +5,7 @@ on:
     workflows: ["Build and Push Image"]
     types: [completed]
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   id-token: write
