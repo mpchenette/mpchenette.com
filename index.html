@@ -7,7 +7,7 @@
   <style>
     @font-face {
       font-family: 'matthew';
-      src: url('Matthew-Regular.ttf');
+      src: url('Matthew-Regular.woff2');
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,7 +31,14 @@
 
     section { margin-bottom: 1.5rem; }
 
-    h1, h2, p, li, a { text-transform: lowercase; }
+    h2, p { text-transform: lowercase; }
+
+    footer {
+      margin-top: 4rem;
+      font-size: 1rem;
+    }
+
+    footer a { margin-right: 1rem; }
 
     h2 {
       font-size: 1rem;
@@ -47,31 +54,29 @@
   </style>
 </head>
 <body>
-  <h1>matthew chenette</h1>
+  <h1>Matthew Chenette</h1>
   <p class="tagline">senior customer success architect @ github</p>
 
   <section>
     <h2>Projects</h2>
     <ul>
-      <li><a href="#">Project One</a> — short description</li>
-      <li><a href="#">Project Two</a> — short description</li>
+      <li><a href="https://copilot-feature-matrix.com">copilot feature matrix</a> — made with github copilot</li>
+      <li>prompt arcade — made with claude code</li>
     </ul>
   </section>
 
   <section>
     <h2>Articles</h2>
     <ul>
-      <li><a href="#">Article Title</a></li>
-      <li><a href="#">Another Article</a></li>
+      <li><a href="https://medium.com/@mpchenette/standardized-ci-cd-azure-devops-a40089920bd7">Standardized CI/CD + Azure DevOps</a></li>
+      <li><a href="https://medium.com/@mpchenette/azure-boards-best-practices-58ccfa264c1a">Azure Boards - Best Practices</a></li>
     </ul>
   </section>
 
-  <section>
-    <h2>Links</h2>
-    <ul>
-      <li><a href="#">GitHub</a></li>
-      <li><a href="#">LinkedIn</a></li>
-    </ul>
-  </section>
+  <footer>
+    <a href="https://github.com/mpchenette">github</a>
+    <a href="https://linkedin.com/in/mpchenette">linkedin</a>
+  </footer>
+
 </body>
 </html>
